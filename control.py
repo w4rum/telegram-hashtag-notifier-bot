@@ -164,7 +164,7 @@ def cmdMySubs(bot, update):
 def onTGMessage(text):
     """Handles receiving messages from the Telegram bot."""
     # find hashtags (hash (#) + alphanumeric chars + space or end-of-string)
-    htsRaw = re.findall(r"#[a-zA-Z0-9]*(?=(?:\s+|$))", text)
+    htsRaw = re.findall(r"#[a-zA-Z0-9]*(?=(?:\s+|$|[^a-zA-Z0-9]))", text)
 
     for htRaw in htsRaw:
         ht = htRaw[1:]
