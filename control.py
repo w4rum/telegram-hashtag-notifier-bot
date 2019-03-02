@@ -185,8 +185,8 @@ def quit():
 
 ### Main
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.DEBUG,
-                        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    #logging.basicConfig(level=logging.DEBUG,
+    #                    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
     COMMANDS_CLI    = {
         "quit": quit
