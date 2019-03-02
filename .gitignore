@@ -1,0 +1,6 @@
+config.py
+*.swp
+__pycache__
+.ropeproject
+*.log
+*.pickle

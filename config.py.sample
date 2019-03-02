@@ -1,0 +1,21 @@
+#!/bin/python
+
+#########################
+## Telegram config
+#########################
+# API token for the Telegram bot (you get this from @BotFather)
+API_TOKEN  = "---"
+# ID of chat between your TG account and the TG bot
+# The TG bot will reject anyone else trying to message it and only listen on
+# the configured group chat.
+# See README.md for more info.
+CHAT_ID    = -1
+
+#########################
+## Miscellaneous
+#########################
+# Amount of seconds to wait before trying to reconnect
+RECONNECT_DELAY = 30
+
+# Pickle file
+picklefile  = "subs.pickle"
