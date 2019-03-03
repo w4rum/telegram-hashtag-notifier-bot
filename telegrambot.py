@@ -39,7 +39,7 @@ class TGBot():
         if chat_id != config.CHAT_ID:
             return
         for handler in self.texthandlers:
-            handler(update.message.text)
+            handler(bot, update)
 
     def send(self, text):
         self._updater.bot.send_message(

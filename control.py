@@ -67,7 +67,9 @@ def extractHt(update, expectHT=False):
     senderName = update.message.from_user['username'] or sender
 
     htList = []
-    htRaws = re.findall(r"#[a-zA-Z0-9]*(?=(?:\s+|$))", text)
+    regex = r"#[a-zA-Z0-9]*(?=(?:\s+|$|[^a-zA-Z0-9]))"
+    htRaws = re.findall(regex, text)
+    htRaws = [x.lower() for x in htRaws]
 
     if len(htRaws) == 0 and expectHT:
         toTG("" +
@@ -161,13 +163,15 @@ def cmdMySubs(bot, update):
     msg = "%s is subscribed to %s" % (senderName, ", ".join(hts))
     toTG(msg)
 
-def onTGMessage(text):
+def onTGMessage(bot, update):
     """Handles receiving messages from the Telegram bot."""
     # find hashtags (hash (#) + alphanumeric chars + space or end-of-string)
-    htsRaw = re.findall(r"#[a-zA-Z0-9]*(?=(?:\s+|$|[^a-zA-Z0-9]))", text)
+    ex = extractHt(update, expectHT=False)
+    if ex == None:
+        return
+    htList, sender, senderName = ex
 
-    for htRaw in htsRaw:
-        ht = htRaw[1:]
+    for htRaw, ht in htList:
         if ht not in subs or len(subs[ht]) == 0:
             continue
 
