@@ -10,7 +10,7 @@ import logging
 import config
 
 
-def _onStart(bot, update):
+def _onStart(update, context):
     if config.CHAT_ID != -1:
         bot.send_message(chat_id=update.message.chat_id,
                          text="This bot has already been configured.")
@@ -23,26 +23,27 @@ def _onStart(bot, update):
 class TGBot:
 
     def __init__(self):
-        self._updater = Updater(token=config.API_TOKEN)
+        self._updater = Updater(token=config.API_TOKEN, use_context=True)
         self._dispatcher = self._updater.dispatcher
         self._dispatcher.add_handler(CommandHandler('start', _onStart))
-        self._dispatcher.add_handler(
-            MessageHandler(Filters.text, self._onText))
         self.texthandlers = []
+        self._cmd_handlers = []
 
     def run(self):
+        self._dispatcher.add_handler(
+            MessageHandler(Filters.text, self._onText))
         self._updater.start_polling()
 
     def stop(self):
         self._updater.stop()
         print("Telegram Bot shut down.")
 
-    def _onText(self, bot, update):
+    def _onText(self, update, context):
         chat_id = update.message.chat_id
         if chat_id != config.CHAT_ID:
             return
         for handler in self.texthandlers:
-            handler(bot, update)
+            handler(update, context)
 
     def send(self, text):
         self._updater.bot.send_message(
@@ -53,17 +54,19 @@ class TGBot:
 
     def addCommand(self, command, handler):
         # Wrap the handler to include a CHAT_ID check
-        self._dispatcher.add_handler(CommandHandler(command,
-                                                    lambda bot,
-                                                           update: self._commandWrapper(
-                                                        handler, bot, update)))
+        cmd_handler = CommandHandler(command,
+                                     lambda update, context:
+                                     self._commandWrapper(
+                                         handler, update, context))
+        self._cmd_handlers.append(cmd_handler)
+        self._dispatcher.add_handler(cmd_handler)
 
-    def _commandWrapper(self, handler, bot, update):
+    def _commandWrapper(self, handler, update, context):
         chat_id = update.message.chat_id
         if chat_id != config.CHAT_ID:
             return
         else:
-            return handler(bot, update)
+            return handler(update, context)
 
 
 if __name__ == "__main__":

@@ -1,11 +1,7 @@
 #!/bin/python
 
-import datetime
 import sys
-import time
-import threading
 import traceback
-import signal
 import logging
 import html
 import os.path
@@ -27,6 +23,8 @@ tgBot = None
 
 # Subscription DB
 subs = {}
+
+logger: logging.Logger = None
 
 
 # General
@@ -91,7 +89,7 @@ Examples: #csgo, #ArmA3""" % htRaw)
     return htList, sender, senderName
 
 
-def cmdSub(bot, update):
+def cmdSub(update, context):
     ex = extractHt(update, expectHT=True)
     if ex == None:
         return
@@ -116,7 +114,7 @@ def cmdSub(bot, update):
     saveSubs()
 
 
-def cmdUnsub(bot, update):
+def cmdUnsub(update, context):
     ex = extractHt(update, expectHT=True)
     if ex == None:
         return
@@ -141,7 +139,7 @@ def cmdUnsub(bot, update):
     saveSubs()
 
 
-def cmdList(bot, update):
+def cmdList(update, context):
     msg = "Known hashtags and subscriber count:\n"
     msg += "<pre>Count | Hashtag\n"
     msg += "----------------------\n"
@@ -159,7 +157,7 @@ def cmdList(bot, update):
     toTG(msg, raw=True)
 
 
-def cmdMySubs(bot, update):
+def cmdMySubs(update, context):
     sender = update.message.from_user['id']
     senderName = update.message.from_user['username'] or sender
 
@@ -172,7 +170,7 @@ def cmdMySubs(bot, update):
     toTG(msg)
 
 
-def onTGMessage(bot, update):
+def onTGMessage(update, context):
     """Handles receiving messages from the Telegram bot."""
     # find hashtags (hash (#) + alphanumeric chars + space or end-of-string)
     ex = extractHt(update, expectHT=False)
@@ -198,33 +196,69 @@ def quit():
     should_quit = True
 
 
+def setup_logging(*, debug_on_stdout=False) -> None:
+    """
+    Sets up multiple log files with different sensitivities.
+    INFO will also be sent to stdout.
+    WARNING and above will also be sent to stderr.
+    DEBUG will only be sent to stdout if debug_on_stdout is True.
+
+    :param debug_on_stdout: Whether DEBUG should be logged on stdout
+    """
+
+    formatter = logging.Formatter(
+        "[%(asctime)s][%(levelname)s][%(name)s][%(funcName)s] %(message)s")
+
+    # multiple files with different sensitivities
+    os.makedirs("logs", exist_ok=True)
+    log_debug = logging.FileHandler(filename="logs/debug.log",
+                                    encoding="utf-8", mode="a")
+    log_debug.setLevel(logging.DEBUG)
+    log_debug.setFormatter(formatter)
+    log_info = logging.FileHandler(filename="logs/info.log",
+                                   encoding="utf-8", mode="a")
+    log_info.setLevel(logging.INFO)
+    log_info.setFormatter(formatter)
+    log_warning = logging.FileHandler(filename="logs/warning.log",
+                                      encoding="utf-8", mode="a")
+    log_warning.setLevel(logging.WARNING)
+    log_warning.setFormatter(formatter)
+
+    stdout_level = logging.DEBUG if debug_on_stdout else logging.INFO
+    log_stdout = logging.StreamHandler(stream=sys.stdout)
+    log_stdout.setLevel(stdout_level)
+    log_stdout.setFormatter(formatter)
+
+    log_stderr = logging.StreamHandler(stream=sys.stderr)
+    log_stderr.setLevel(logging.WARNING)
+    log_stderr.setFormatter(formatter)
+
+    # filter WARNING and above on stdout
+    def filter_above_info(record):
+        return record.levelno <= logging.INFO
+
+    log_stdout.addFilter(filter_above_info)
+
+    logging.basicConfig(level=logging.NOTSET,
+                        handlers=[log_debug, log_info, log_warning, log_stdout,
+                                  log_stderr])
+
+    global logger
+    logger = logging.getLogger(__name__)
+
+
 ### Main
 if __name__ == "__main__":
-    # logging.basicConfig(level=logging.DEBUG,
-    #                    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-
-    COMMANDS_CLI = {
-        "quit": quit
-    }
-
-    should_quit = False
+    setup_logging(debug_on_stdout=True)
 
     # Load subscription DB
     loadSubs()
 
     try:
         startTGBot()
-        while not should_quit:
-            cmd = input("> ")
-            if not cmd in COMMANDS_CLI:
-                print("Unknown command!")
-            else:
-                COMMANDS_CLI[cmd]()
-
     except (KeyboardInterrupt, EOFError) as e:
         print("Interrupt received. Shutting down...")
         quit()
-
     except:
         print("====================")
         print("Main thread crashed!")
