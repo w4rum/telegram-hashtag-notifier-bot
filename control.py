@@ -20,13 +20,14 @@ import telegrambot
 import config
 
 # Constants
-CONFIG_FILE     = "config.py"
+CONFIG_FILE = "config.py"
 
 # Bot instance
-tgBot           = None
+tgBot = None
 
 # Subscription DB
-subs            = {}
+subs = {}
+
 
 # General
 def loadSubs():
@@ -34,6 +35,7 @@ def loadSubs():
     if os.path.isfile(config.picklefile):
         with open(config.picklefile, "rb") as f:
             subs = pickle.load(f)
+
 
 def saveSubs():
     with open(config.picklefile, "wb") as f:
@@ -49,6 +51,7 @@ def toTG(s, raw=False):
     else:
         tgBot.send(s)
 
+
 def startTGBot():
     """Starts the Telegram bot and sets the global
     tgBot variable."""
@@ -60,6 +63,7 @@ def startTGBot():
     tgBot.addCommand("list", cmdList)
     tgBot.addCommand("mysubs", cmdMySubs)
     tgBot.run()
+
 
 def extractHt(update, expectHT=False):
     text = update.message['text']
@@ -73,7 +77,7 @@ def extractHt(update, expectHT=False):
 
     if len(htRaws) == 0 and expectHT:
         toTG("" +
-"""No valid hashtag found.
+             """No valid hashtag found.
 
 Hashtags must be prefixed with a hash (#) and consist of alphanumeric \
 characters only.
@@ -85,6 +89,7 @@ Examples: #csgo, #ArmA3""" % htRaw)
         ht = htRaw[1:]
         htList.append((htRaw, ht))
     return htList, sender, senderName
+
 
 def cmdSub(bot, update):
     ex = extractHt(update, expectHT=True)
@@ -110,6 +115,7 @@ def cmdSub(bot, update):
              (senderName, ", ".join(goodList), ", ".join(dupeList)))
     saveSubs()
 
+
 def cmdUnsub(bot, update):
     ex = extractHt(update, expectHT=True)
     if ex == None:
@@ -134,6 +140,7 @@ def cmdUnsub(bot, update):
              (senderName, ", ".join(goodList), ", ".join(missList)))
     saveSubs()
 
+
 def cmdList(bot, update):
     msg = "Known hashtags and subscriber count:\n"
     msg += "<pre>Count | Hashtag\n"
@@ -151,6 +158,7 @@ def cmdList(bot, update):
 
     toTG(msg, raw=True)
 
+
 def cmdMySubs(bot, update):
     sender = update.message.from_user['id']
     senderName = update.message.from_user['username'] or sender
@@ -162,6 +170,7 @@ def cmdMySubs(bot, update):
 
     msg = "%s is subscribed to %s" % (senderName, ", ".join(hts))
     toTG(msg)
+
 
 def onTGMessage(bot, update):
     """Handles receiving messages from the Telegram bot."""
@@ -176,9 +185,10 @@ def onTGMessage(bot, update):
             continue
 
         msg = ("%s was mentioned.\n" % htRaw) + " ".join([(
-            '<a href="tg://user?id=%i">%i</a>' % (sender, sender))
+                '<a href="tg://user?id=%i">%i</a>' % (sender, sender))
             for sender in subs[ht]])
         toTG(msg, raw=True)
+
 
 ### Common
 def quit():
@@ -187,12 +197,13 @@ def quit():
     tgBot.stop()
     should_quit = True
 
+
 ### Main
 if __name__ == "__main__":
-    #logging.basicConfig(level=logging.DEBUG,
+    # logging.basicConfig(level=logging.DEBUG,
     #                    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
-    COMMANDS_CLI    = {
+    COMMANDS_CLI = {
         "quit": quit
     }
 
@@ -220,5 +231,3 @@ if __name__ == "__main__":
         print("====================")
         print()
         traceback.print_exc()
-
-

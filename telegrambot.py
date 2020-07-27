@@ -9,22 +9,25 @@ import logging
 
 import config
 
+
 def _onStart(bot, update):
     if config.CHAT_ID != -1:
         bot.send_message(chat_id=update.message.chat_id,
-                        text="This bot has already been configured.")
+                         text="This bot has already been configured.")
     else:
         bot.send_message(chat_id=update.message.chat_id,
-                        text="Your CHAT_ID is %i. Add this to your config file."
-                             % update.message.chat_id)
+                         text="Your CHAT_ID is %i. Add this to your config file."
+                              % update.message.chat_id)
 
-class TGBot():
+
+class TGBot:
 
     def __init__(self):
         self._updater = Updater(token=config.API_TOKEN)
         self._dispatcher = self._updater.dispatcher
         self._dispatcher.add_handler(CommandHandler('start', _onStart))
-        self._dispatcher.add_handler(MessageHandler(Filters.text, self._onText))
+        self._dispatcher.add_handler(
+            MessageHandler(Filters.text, self._onText))
         self.texthandlers = []
 
     def run(self):
@@ -51,7 +54,9 @@ class TGBot():
     def addCommand(self, command, handler):
         # Wrap the handler to include a CHAT_ID check
         self._dispatcher.add_handler(CommandHandler(command,
-            lambda bot, update: self._commandWrapper(handler, bot, update)))
+                                                    lambda bot,
+                                                           update: self._commandWrapper(
+                                                        handler, bot, update)))
 
     def _commandWrapper(self, handler, bot, update):
         chat_id = update.message.chat_id
@@ -60,8 +65,9 @@ class TGBot():
         else:
             return handler(bot, update)
 
+
 if __name__ == "__main__":
-    #logging.basicConfig(level=logging.DEBUG,
+    # logging.basicConfig(level=logging.DEBUG,
     #                    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
     bot = TGBot()
